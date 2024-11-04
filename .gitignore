@@ -1,0 +1,41 @@
+# Бинарные исполняемые файлы
+/go-weather-mqtt
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Каталоги, генерируемые при сборке
+bin/
+out/
+build/
+
+# Кэш сборки и модули Go
+/.cache
+/tmp/
+/vendor/
+/*.test
+/go.sum
+
+# Кэш и настройки Go
+.gopath/
+.golangci.yml
+
+# Конфигурационные и временные файлы
+*.env
+*.local
+*.log
+*.tmp
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# Файлы IDE и редакторов
+.idea/
+*.swp
+*~
+
+# Системные файлы
+.DS_Store
+Thumbs.db
