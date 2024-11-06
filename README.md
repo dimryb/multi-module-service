@@ -40,6 +40,7 @@ go build -o go-weather-mqtt.exe
 
 Установите необходимые библиотеки с помощью команды:
 ```bash
+go mod init main
 go get github.com/eclipse/paho.mqtt.golang
 ```
 
