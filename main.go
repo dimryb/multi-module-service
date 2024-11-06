@@ -2,17 +2,19 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
-const (
-	Version           = "1.1.0"
+const ( // TODO: конфигурацию брать из конфиг файла и получать по mqtt
+	Version           = "2.0.0"
 	DefaultLatitude   = "56.4977"
 	DefaultLongitude  = "84.9744"
 	WeatherAPIBaseURL = "https://api.open-meteo.com/v1/forecast"
@@ -21,7 +23,7 @@ const (
 	MQTTTopicIn       = "temperature/CurrentIndoor"
 	MQTTBrokerHost    = "localhost" // Укажите свой адрес и порт брокера
 	MQTTBrokerPort    = 1883
-	PublishPeriod 	  = 5 * time.Second
+	PublishPeriod     = 5 * time.Second
 )
 
 type WeatherMqtt struct {
@@ -128,7 +130,31 @@ func (w *WeatherMqtt) requestAndPublishWeatherData() {
 	w.sendToMqtt(temp)
 }
 
+func checkFlags() {
+	versionFlag := flag.Bool("version", false, "Показать версию программы")
+	debugFlag := flag.Bool("debug", false, "Включить дебаг-режим")
+	configFileFlag := flag.String("config", "", "Путь к файлу конфигурации")
+	flag.Parse()
+
+	if *versionFlag {
+		fmt.Printf("go-weather-mqtt версия %s\n", Version)
+		os.Exit(0)
+	}
+
+	if *debugFlag {
+		fmt.Println("Дебаг-режим включен")
+		// TODO: включить дополнительные логи или отладочную информацию
+	}
+
+	if *configFileFlag != "" {
+		fmt.Printf("Используется файл конфигурации: %s\n", *configFileFlag)
+		// TODO: добавить логику для загрузки иной конфигурации
+	}
+}
+
 func main() {
+	checkFlags()
+
 	weatherMqtt := NewWeatherMqtt(MQTTBrokerHost, MQTTBrokerPort, DefaultLatitude, DefaultLongitude)
 	weatherMqtt.Run()
 }
