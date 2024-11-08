@@ -2,28 +2,43 @@ package mqttclient
 
 import (
 	"fmt"
-	"log"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
-type MQTTClient struct {
+type MQTTClientInterface interface {
+    Publish(topic string, qos byte, retained bool, payload interface{}) error
+    Subscribe(topic string, qos byte, callback mqtt.MessageHandler) error
+    Disconnect(quiesce uint)
+}
+
+type mqttClient  struct {
 	client mqtt.Client
 }
 
-func NewClient(broker string, port int) *MQTTClient {
+func NewClient(broker string, port int) (MQTTClientInterface, error) {
 	opts := mqtt.NewClientOptions().AddBroker(fmt.Sprintf("tcp://%s:%d", broker, port))
 	client := mqtt.NewClient(opts)
 
 	if token := client.Connect(); token.Wait() && token.Error() != nil {
-		log.Fatalf("Ошибка подключения к MQTT-брокеру: %v", token.Error())
+		return nil, token.Error()
 	}
 
-	return &MQTTClient{client: client}
+	return &mqttClient {client: client}, nil
 }
 
-func (m *MQTTClient) PublishTemperature(temperature float64) {
-    topic := "temperature/CurrentOutdoor"
-    m.client.Publish(topic, 0, false, fmt.Sprintf("%.2f", temperature))
-    log.Printf("Опубликовано: температура за бортом = %.2f", temperature)
+func (m *mqttClient) Publish(topic string, qos byte, retained bool, payload interface{}) error {
+    token := m.client.Publish(topic, qos, retained, payload)
+    token.Wait()
+    return token.Error()
+}
+
+func (m *mqttClient) Subscribe(topic string, qos byte, callback mqtt.MessageHandler) error {
+    token := m.client.Subscribe(topic, qos, callback)
+    token.Wait()
+    return token.Error()
+}
+
+func (m *mqttClient) Disconnect(quiesce uint) {
+    m.client.Disconnect(quiesce)
 }

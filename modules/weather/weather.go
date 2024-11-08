@@ -16,41 +16,47 @@ const (
 )
 
 type WeatherService struct {
-	latitude  string
-	longitude string
-	client    *mqttclient.MQTTClient
-	period int
+	latitude      string
+	longitude     string
+	mqttClient    mqttclient.MQTTClientInterface
+	publishPeriod time.Duration
 }
 
-func NewWeatherService(latitude, longitude string, client *mqttclient.MQTTClient, period int) *WeatherService {
+func NewWeatherService(client mqttclient.MQTTClientInterface, latitude, longitude string, period time.Duration) *WeatherService {
 	return &WeatherService{
-		latitude:  latitude,
-		longitude: longitude,
-		client:    client,
-		period: period,
+		latitude:      latitude,
+		longitude:     longitude,
+		mqttClient:    client,
+		publishPeriod: period,
 	}
 }
 
-func (w *WeatherService) StartWeatherCycle() {
-	go func() {
-		period := 5 * time.Second
-		ticker := time.NewTicker(period)
-		defer ticker.Stop()
+func (w *WeatherService) Run() {
+	log.Printf("Модуль WeatherService запущен. Период публикации: %v", w.publishPeriod)
 
-		for range ticker.C {
-			temp, err := w.getWeatherData()
-			if err != nil {
-				log.Printf("ошибка получения данных о погоде: %v", err)
-				continue
-			}
-			w.client.PublishTemperature(temp)
-		}
-	}()
+	w.fetchAndPublishWeatherData()
+
+	ticker := time.NewTicker(w.publishPeriod)	
+	defer ticker.Stop()	
+
+	for range ticker.C {
+		w.fetchAndPublishWeatherData()
+	}
 }
 
-func (w *WeatherService) getWeatherData() (float64, error) {
-	apiURL := fmt.Sprintf("%s?latitude=%s&longitude=%s&current_weather=true", WeatherAPIBaseURL, w.latitude, w.longitude)
-	client := &http.Client{Timeout: WeatherAPITimeout}
+func (w *WeatherService) fetchAndPublishWeatherData() {
+	temperature, err := w.getWeatherData(w.latitude, w.longitude)
+	if err != nil {
+		log.Printf("Ошибка получения данных о погоде: %v", err)
+		return
+	}
+	log.Printf("Отправка в MQTT температуры: %.2f", temperature)
+	w.mqttClient.Publish("temperature/CurrentOutdoor", 0, false, fmt.Sprintf("%.2f", temperature))
+}
+
+func (w *WeatherService) getWeatherData(latitude, longitude string) (float64, error) {
+	apiURL := fmt.Sprintf("%s?latitude=%s&longitude=%s&current_weather=true", WeatherAPIBaseURL, latitude, longitude)
+	client := &http.Client{Timeout: WeatherAPITimeout}	
 
 	resp, err := client.Get(apiURL)
 	if err != nil {

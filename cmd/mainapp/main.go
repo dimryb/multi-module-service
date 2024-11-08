@@ -3,7 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
+	"time"
 
 	"multi-module-service/modules/mqttclient"
 	"multi-module-service/modules/weather"
@@ -38,10 +40,14 @@ func checkFlags() {
 func main() {
 	checkFlags()
 
-	mqttClient := mqttclient.NewClient("localhost", 1883)
+	client, err := mqttclient.NewClient("localhost", 1883)
+	if err != nil {
+        log.Fatalf("Ошибка подключения к MQTT: %v", err)
+    }
+    defer client.Disconnect(250)
 
-	weatherService := weather.NewWeatherService("56.4977", "84.9744", mqttClient, 5)
-	weatherService.StartWeatherCycle()
+	weatherService := weather.NewWeatherService(client, "56.4977", "84.9744", 5*time.Second)
+	go weatherService.Run()
 
 	select {}
 }
