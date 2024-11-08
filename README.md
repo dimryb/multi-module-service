@@ -40,6 +40,7 @@ go build -o go-weather-mqtt.exe
 
 Установите необходимые библиотеки с помощью команды:
 ```bash
+go mod init main
 go get github.com/eclipse/paho.mqtt.golang
 ```
 
@@ -85,3 +86,15 @@ sudo systemctl start weather-mqtt
 ```bash
 sudo systemctl status weather-mqtt
 ```
+## Использование флагов командной строки
+
+Программа `go-weather-mqtt` поддерживает несколько флагов командной строки, которые позволяют управлять поведением программы при запуске.
+
+### Доступные флаги
+
+#### `-version`
+Показывает текущую версию программы и завершает выполнение.
+
+**Пример использования:**
+```bash
+go-weather-mqtt -version
