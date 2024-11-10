@@ -5,6 +5,7 @@ package main
 // логирование в формате сислога
 // добавить модуль конфигурации, выбрать формат конфигурационного файла
 // конфигурация модулей фитча-тоглы
+// конфигурация в yaml файле
 // документация на каждый модуль
 // документация на кросплатформенную сборку
 // файлы сервиса, запуск и проверка на винде в его линукс окружении 
@@ -12,6 +13,7 @@ package main
 // юнит тесты
 // поддержке двух копий репозитория 
 // место хранения базовых констант проекта: версия, имя сервиса
+// модуль контроля и коррекции топиков в MQTT
 
 import (
 	"flag"
@@ -24,10 +26,6 @@ import (
 	"multi-module-service/modules/weather"
 )
 
-const (
-	Version = "2.0.0"
-)
-
 func checkFlags() {
 	versionFlag := flag.Bool("version", false, "Показать версию программы")
 	debugFlag := flag.Bool("debug", false, "Включить дебаг-режим")
@@ -35,7 +33,7 @@ func checkFlags() {
 	flag.Parse()
 
 	if *versionFlag {
-		fmt.Printf("go-weather-mqtt версия %s\n", Version)
+		fmt.Printf("%s версия %s\n", AppName, Version)
 		os.Exit(0)
 	}
 
