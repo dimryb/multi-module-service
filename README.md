@@ -43,15 +43,15 @@ go build -o multi-module-service.exe
 
 ## Структура проекта
 
-multi-module-service/
-├── cmd/
-│   └── mainapp/        # Основное приложение
-│       └── main.go
-├── modules/
-│   ├── mqttclient/     # Модуль MQTT клиента
-│   │   └── README.md
-│   └── weather/        # Модуль для получения погодных данных
-│       └── README.md
+multi-module-service/  
+├── cmd/  
+│   └── mainapp/        # Основное приложение  
+│       └── main.go  
+├── modules/  
+│   ├── mqttclient/     # Модуль MQTT клиента  
+│   │   └── README.md  
+│   └── weather/        # Модуль для получения погодных данных  
+│       └── README.md  
 └── README.md           # Общий обзор проекта
 
 Каждый модуль имеет собственный README.md, где указаны зависимости, конфигурации и инструкции по использованию для конкретного модуля.
