@@ -1,13 +1,14 @@
-# go-weather-mqtt
+# multi-module-service
 
-# Система мониторинга температуры
+# Многомодульная служба для для выполнения различных функций в отдельных модулях
 
 # Версия 2.0.0
 
-Данная версия написана на Go взамен реализации на python:  http://gitlab.local.infomatix.tech/basic-kit/weather-mqtt-publisher
+Данная версия написана на Go взамен реализации на python: weather-mqtt-publisher
 
 ## Обзор
-Проект **go-weather-mqtt** предназначен для мониторинга температуры снаружи и на борту в реальном времени с использованием API Open-Meteo. Скрипт получает текущие данные о погоде, рассчитывает температуру на борту с учетом смещения и публикует эти значения в топики MQTT.
+Проект **multi-module-service** предназначен для выполнения различных функций:
+ * модуль мониторинга температуры в реальном времени с использованием API Open-Meteo. Скрипт получает текущие данные о погоде и публикует эти значения в топики MQTT.
 
 ## Начало на Go
 ### Установка Go SDK
@@ -33,12 +34,27 @@ go run . -version
 Если вы хотите создать исполняемый файл приложения, используйте команду:
 * **Для Linux**
 ```bash
-go build -o go-weather-mqtt
+go build -o multi-module-service
 ```
 * **Для Windows**
 ```bash
-go build -o go-weather-mqtt.exe
+go build -o multi-module-service.exe
 ```
+
+## Структура проекта
+
+multi-module-service/
+├── cmd/
+│   └── mainapp/        # Основное приложение
+│       └── main.go
+├── modules/
+│   ├── mqttclient/     # Модуль MQTT клиента
+│   │   └── README.md
+│   └── weather/        # Модуль для получения погодных данных
+│       └── README.md
+└── README.md           # Общий обзор проекта
+
+Каждый модуль имеет собственный README.md, где указаны зависимости, конфигурации и инструкции по использованию для конкретного модуля.
 
 ## Требования
 * Go 1.20+
@@ -72,15 +88,14 @@ go run main.go
 
 По умолчанию используемые топики:
 - температура за бортом **temperature/CurrentOutdoor**
-- температура на борту **temperature/CurrentIndoor**
 
 ## Автозапуск
 
-Чтобы программа запускалась автоматически, создайте systemd-службу:
-1. Добавьте файл **weather-mqtt.service** в директорию /etc/systemd/system/ и укажите путь к исполняемому файлу приложения.
+Чтобы программа запускалась автоматически, создайте systemd-службу (Linux):
+1. Добавьте файл **multi-module-service.service** в директорию /etc/systemd/system/ и укажите путь к исполняемому файлу приложения.
 2. Убедитесь, что исполняемый файл программы доступен и имеет соответствующие права:
 ```bash
-sudo chmod +x go-weather-mqtt
+sudo chmod +x multi-module-service
 ```
 3. Обновите список служб systemctl:
 ```bash
@@ -88,16 +103,16 @@ sudo systemctl daemon-reload
 ```
 4. Активируйте и запустите эту службу:
 ```bash
-sudo systemctl enable weather-mqtt
-sudo systemctl start weather-mqtt
+sudo systemctl enable multi-module-service
+sudo systemctl start multi-module-service
 ```
 5. Проверьте состояние службы:
 ```bash
-sudo systemctl status weather-mqtt
+sudo systemctl status multi-module-service
 ```
 ## Использование флагов командной строки
 
-Программа `go-weather-mqtt` поддерживает несколько флагов командной строки, которые позволяют управлять поведением программы при запуске.
+Программа `multi-module-service` поддерживает несколько флагов командной строки, которые позволяют управлять поведением программы при запуске.
 
 ### Доступные флаги
 
@@ -106,4 +121,5 @@ sudo systemctl status weather-mqtt
 
 **Пример использования:**
 ```bash
-go-weather-mqtt -version
+multi-module-service -version
+```
