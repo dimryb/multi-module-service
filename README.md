@@ -41,6 +41,21 @@ go build -o multi-module-service
 go build -o multi-module-service.exe
 ```
 
+## Структура проекта
+
+multi-module-service/
+├── cmd/
+│   └── mainapp/        # Основное приложение
+│       └── main.go
+├── modules/
+│   ├── mqttclient/     # Модуль MQTT клиента
+│   │   └── README.md
+│   └── weather/        # Модуль для получения погодных данных
+│       └── README.md
+└── README.md           # Общий обзор проекта
+
+Каждый модуль имеет собственный README.md, где указаны зависимости, конфигурации и инструкции по использованию для конкретного модуля.
+
 ## Требования
 * Go 1.20+
 * Библиотека net/http для запросов к API
@@ -73,7 +88,6 @@ go run main.go
 
 По умолчанию используемые топики:
 - температура за бортом **temperature/CurrentOutdoor**
-- температура на борту **temperature/CurrentIndoor**
 
 ## Автозапуск
 
@@ -108,3 +122,4 @@ sudo systemctl status multi-module-service
 **Пример использования:**
 ```bash
 multi-module-service -version
+```
