@@ -4,7 +4,7 @@
 
 # Версия 2.0.0
 
-Данная версия написана на Go взамен реализации на python:  http://gitlab.local.infomatix.tech/basic-kit/weather-mqtt-publisher
+Данная версия написана на Go взамен реализации на python: weather-mqtt-publisher
 
 ## Обзор
 Проект **multi-module-service** предназначен для выполнения различных функций:
