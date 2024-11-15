@@ -1,0 +1,32 @@
+image: "golang:1.22.2"
+
+stages:
+  - build
+  # - test
+
+before_script:
+  - go version
+  - go mod tidy
+
+# Этап сборки
+build:
+  stage: build
+  script:
+    # Диагностика текущей директории и файлов
+    - echo "Current directory and files:"
+    - pwd
+    - ls -R
+    # Переход в директорию проекта
+    - cd cmd/mainapp || exit 1
+    # Компиляция приложения (если это Go, используйте go build)
+    - go build -o mainapp .
+    # Проверка собранного бинарного файла
+    - ./mainapp --help
+
+# Этап тестирования
+# test:
+#   stage: test
+#   script:
+#     - cd multi-module-service
+#     # Запуск тестов для всех пакетов проекта
+#     - go test ./... -v
