@@ -6,6 +6,7 @@ stages:
 
 before_script:
   - go version
+  - go mod tidy
 
 # Этап сборки
 build:
