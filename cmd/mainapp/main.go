@@ -8,10 +8,10 @@ package main
 // конфигурация в yaml файле
 // документация на каждый модуль
 // документация на кросплатформенную сборку
-// файлы сервиса, запуск и проверка на винде в его линукс окружении 
+// файлы сервиса, запуск и проверка на винде в его линукс окружении
 // настройка пайпа гитлаб, прохождение тестов через пайп
 // юнит тесты
-// поддержке двух копий репозитория 
+// поддержке двух копий репозитория
 // место хранения базовых констант проекта: версия, имя сервиса
 // модуль контроля и коррекции топиков в MQTT
 
@@ -51,11 +51,11 @@ func checkFlags() {
 func main() {
 	checkFlags()
 
-	client, err := mqttclient.NewClient("localhost", 1883)
+	client, err := mqttclient.NewClient("192.168.0.6", 1884)
 	if err != nil {
-        log.Fatalf("Ошибка подключения к MQTT: %v", err)
-    }
-    defer client.Disconnect(250)
+		log.Fatalf("Ошибка подключения к MQTT: %v", err)
+	}
+	defer client.Disconnect(250)
 
 	weatherService := weather.NewWeatherService(client, "56.4977", "84.9744", 5*time.Second)
 	go weatherService.Run()
