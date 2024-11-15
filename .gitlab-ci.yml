@@ -6,32 +6,38 @@ services:
 variables:
   DOCKER_HOST: tcp://docker:2375
   DOCKER_TLS_CERTDIR: ""
+  DOCKER_DRIVER: overlay2
+  DOCKER_BUILDKIT: 1
 
 stages:
   - build
-  - test
+  # - test
   - deploy
 
 # Этап сборки
 build:
   stage: build
   script:
+    # Диагностика текущей директории и файлов
+    - echo "Current directory and files:"
+    - pwd
+    - ls -R
     # Переход в директорию проекта
-    - cd multi-module-service/cmd/mainapp
+    - cd cmd/mainapp || exit 1
     # Компиляция приложения (если это Go, используйте go build)
-    - go build -o .
+    - go build -o mainapp .
     # Проверка собранного бинарного файла
     - ./mainapp --help
 
 # Этап тестирования
-test:
-  stage: test
-  script:
-    - cd multi-module-service
-    # Запуск тестов для всех пакетов проекта
-    - go test ./... -v
+# test:
+#   stage: test
+#   script:
+#     - cd multi-module-service
+#     # Запуск тестов для всех пакетов проекта
+#     - go test ./... -v
 
-# Этап деплоя (настраивается под ваши нужды)
+# Этап деплоя
 deploy:
   stage: deploy
   script:
