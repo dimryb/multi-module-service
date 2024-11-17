@@ -24,11 +24,21 @@ import (
 	"multi-module-service/modules/weather"
 )
 
+type Main struct {
+	appConfig  AppConfig
+	mqttConfig MqttConfig
+}
+
 type AppConfig struct {
 	Weather bool `json:"weather"`
 }
 
-func checkFlags() {
+type MqttConfig struct {
+	Host string `json:"host"`
+	Port int    `json:"port"`
+}
+
+func (*Main) checkFlags() {
 	versionFlag := flag.Bool("version", false, "Показать версию программы")
 	debugFlag := flag.Bool("debug", false, "Включить дебаг-режим")
 	configFileFlag := flag.String("config", "", "Путь к файлу конфигурации")
@@ -50,30 +60,34 @@ func checkFlags() {
 	}
 }
 
-func loadAppConfig() (*config.Config, error) {
+func (m *Main) loadAppConfig() (*config.Config, error) {
 	cfg, err := config.NewConfig("config.yml")
 	if err != nil {
 		return nil, fmt.Errorf("loading config: %w", err)
 	}
 
-	// Структура, в которую загружаем конфигурацию
-	var appConfig AppConfig
-
 	// Загружаем данные из конфигурации в структуру
-	if err := cfg.LoadInto("modules", &appConfig); err != nil {
+	if err := cfg.LoadInto("modules", &m.appConfig); err != nil {
+		return nil, fmt.Errorf("loading config into structure: %w", err)
+	}
+
+	// Загружаем конфигурацию MQTT
+	if err := cfg.LoadInto("mqtt", &m.mqttConfig); err != nil {
 		return nil, fmt.Errorf("loading config into structure: %w", err)
 	}
 
 	// Выводим данные из конфигурации
-	fmt.Println("App config:", appConfig)
+	fmt.Println("App config:", m)
 
 	return cfg, nil
 }
 
 func main() {
-	checkFlags()
+	var m Main
 
-	cfg, err := loadAppConfig()
+	m.checkFlags()
+
+	cfg, err := m.loadAppConfig()
 	if err != nil {
 		log.Fatalf("Error loading application config: %v", err)
 	}
@@ -81,7 +95,7 @@ func main() {
 	// Создаем менеджер модулей
 	moduleMgr := NewModuleManager(cfg)
 
-	client, err := mqttclient.NewClient("192.168.0.6", 1884)
+	client, err := mqttclient.NewClient(m.mqttConfig.Host, m.mqttConfig.Port)
 	if err != nil {
 		log.Fatalf("Ошибка подключения к MQTT: %v", err)
 	}
