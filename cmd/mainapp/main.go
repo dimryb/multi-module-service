@@ -24,9 +24,8 @@ import (
 	"multi-module-service/modules/weather"
 )
 
-type ModuleConfig struct {
-	Param1 string `json:"param1"`
-	Param2 int    `json:"param2"`
+type AppConfig struct {
+	Weather bool `json:"weather"`
 }
 
 func checkFlags() {
@@ -51,30 +50,36 @@ func checkFlags() {
 	}
 }
 
-func loadConfig() {
+func loadAppConfig() (*config.Config, error) {
 	cfg, err := config.NewConfig("config.yml")
 	if err != nil {
-		fmt.Println("Error loading config:", err)
-		return
+		return nil, fmt.Errorf("loading config: %w", err)
 	}
 
 	// Структура, в которую загружаем конфигурацию
-	var moduleConfig ModuleConfig
+	var appConfig AppConfig
 
 	// Загружаем данные из конфигурации в структуру
-	if err := cfg.LoadInto("module1", &moduleConfig); err != nil {
-		fmt.Println("Error loading config into structure:", err)
-		return
+	if err := cfg.LoadInto("modules", &appConfig); err != nil {
+		return nil, fmt.Errorf("loading config into structure: %w", err)
 	}
 
 	// Выводим данные из конфигурации
-	fmt.Println("Module config:", moduleConfig)
+	fmt.Println("App config:", appConfig)
+
+	return cfg, nil
 }
 
 func main() {
 	checkFlags()
 
-	loadConfig()
+	cfg, err := loadAppConfig()
+	if err != nil {
+		log.Fatalf("Error loading application config: %v", err)
+	}
+
+	// Создаем менеджер модулей
+	moduleMgr := NewModuleManager(cfg)
 
 	client, err := mqttclient.NewClient("192.168.0.6", 1884)
 	if err != nil {
@@ -82,8 +87,17 @@ func main() {
 	}
 	defer client.Disconnect(250)
 
-	weatherService := weather.NewWeatherService(client, "56.4977", "84.9744", 5*time.Second)
-	go weatherService.Run()
+	weatherModuleName := "weather"
+	enabledWeather, err := moduleMgr.IsModuleEnabled(weatherModuleName)
+	if err != nil {
+		log.Fatalf("Failed to check module state: %v", err)
+	}
+
+	fmt.Printf("Is module '%s' enabled: %v\n", weatherModuleName, enabledWeather)
+	if enabledWeather {
+		weatherService := weather.NewWeatherService(client, "56.4977", "84.9744", 5*time.Second)
+		go weatherService.Run()
+	}
 
 	select {}
 }
