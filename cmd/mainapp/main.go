@@ -6,12 +6,9 @@ package main
 // добавить модуль конфигурации, выбрать формат конфигурационного файла
 // конфигурация модулей фитча-тоглы
 // конфигурация в yaml файле
-// документация на каждый модуль
-// документация на кросплатформенную сборку
 // файлы сервиса, запуск и проверка на винде в его линукс окружении
 // настройка пайпа гитлаб, прохождение тестов через пайп
 // юнит тесты
-// поддержке двух копий репозитория
 // место хранения базовых констант проекта: версия, имя сервиса
 // модуль контроля и коррекции топиков в MQTT
 
@@ -22,9 +19,15 @@ import (
 	"os"
 	"time"
 
+	"multi-module-service/modules/config"
 	"multi-module-service/modules/mqttclient"
 	"multi-module-service/modules/weather"
 )
+
+type ModuleConfig struct {
+	Param1 string `json:"param1"`
+	Param2 int    `json:"param2"`
+}
 
 func checkFlags() {
 	versionFlag := flag.Bool("version", false, "Показать версию программы")
@@ -48,8 +51,30 @@ func checkFlags() {
 	}
 }
 
+func loadConfig() {
+	cfg, err := config.NewConfig("config.yml")
+	if err != nil {
+		fmt.Println("Error loading config:", err)
+		return
+	}
+
+	// Структура, в которую загружаем конфигурацию
+	var moduleConfig ModuleConfig
+
+	// Загружаем данные из конфигурации в структуру
+	if err := cfg.LoadInto("module1", &moduleConfig); err != nil {
+		fmt.Println("Error loading config into structure:", err)
+		return
+	}
+
+	// Выводим данные из конфигурации
+	fmt.Println("Module config:", moduleConfig)
+}
+
 func main() {
 	checkFlags()
+
+	loadConfig()
 
 	client, err := mqttclient.NewClient("192.168.0.6", 1884)
 	if err != nil {
