@@ -1,0 +1,17 @@
+emptySection: {}
+
+sectionWithEmptyKey:
+  "": "value for empty key"
+
+sectionWithNumbersAsKeys:
+  123: "value for key 123"
+  0: "zero key"
+  -1: "negative key"
+
+sectionWithBooleanKeys:
+  true: "value for true key"
+  false: "value for false key"
+
+sectionWithSpecialCharacters:
+  "!@#$%^&*()": "value for special characters"
+  "unicodeKey😊": "value with emoji"
