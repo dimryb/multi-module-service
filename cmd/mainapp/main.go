@@ -61,7 +61,7 @@ func (*Main) checkFlags() {
 }
 
 func (m *Main) loadAppConfig() (*config.Config, error) {
-	cfg, err := config.NewConfig("config.yml")
+	cfg, err := config.NewConfig("config.yml", &config.DefaultReader{})
 	if err != nil {
 		return nil, fmt.Errorf("loading config: %w", err)
 	}
