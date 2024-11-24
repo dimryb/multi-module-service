@@ -23,6 +23,10 @@ type Config struct {
 	data map[string]interface{}
 }
 
+type ConfigLoader interface {
+	LoadInto(key string, target interface{}) error
+}
+
 // NewConfig создает новый объект конфигурации, автоматически конвертируя YAML или JSON файл в структуру
 func NewConfig(filePath string, reader Reader) (*Config, error) {
 	content, err := reader.ReadFile(filePath)

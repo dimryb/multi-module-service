@@ -13,20 +13,24 @@ package main
 // модуль контроля и коррекции топиков в MQTT
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
 	"os"
 	"time"
 
+	"multi-module-service/modules/canparser"
 	"multi-module-service/modules/config"
+	"multi-module-service/modules/fileutils"
 	"multi-module-service/modules/mqttclient"
 	"multi-module-service/modules/weather"
 )
 
 type Main struct {
-	appConfig  AppConfig
-	mqttConfig MqttConfig
+	appConfig          AppConfig
+	mqttConfig         MqttConfig
+	canDumpParsingMode bool
 }
 
 type AppConfig struct {
@@ -38,10 +42,11 @@ type MqttConfig struct {
 	Port int    `json:"port"`
 }
 
-func (*Main) checkFlags() {
+func (m *Main) checkFlags() {
 	versionFlag := flag.Bool("version", false, "Показать версию программы")
 	debugFlag := flag.Bool("debug", false, "Включить дебаг-режим")
 	configFileFlag := flag.String("config", "", "Путь к файлу конфигурации")
+	candumpFileFlag := flag.String("candump", "", "Путь к файлу can-damp в текстовом формате вывода slcan")
 	flag.Parse()
 
 	if *versionFlag {
@@ -57,6 +62,12 @@ func (*Main) checkFlags() {
 	if *configFileFlag != "" {
 		fmt.Printf("Используется файл конфигурации: %s\n", *configFileFlag)
 		// TODO: добавить логику для загрузки иной конфигурации
+	}
+
+	if *candumpFileFlag != "" {
+		fmt.Printf("Используется файл дампа can в текстовом формате вывода slcan: %s\n", *candumpFileFlag)
+		// TODO: добавить логику включения режима работы для парсинга дампа can
+		m.canDumpParsingMode = true // FIXME: пока через этот признак
 	}
 }
 
@@ -82,6 +93,34 @@ func (m *Main) loadAppConfig() (*config.Config, error) {
 	return cfg, nil
 }
 
+func canDumpParse(dumpFilename string, parsedFilename string) {
+	// Чтение дампа из файла
+	lines, err := fileutils.ReadFile(dumpFilename)
+	if err != nil {
+		log.Fatalf("Failed to read file: %v\n", err)
+	}
+
+	// Создание нового парсера
+	parser := canparser.NewParser()
+
+	// Сканируем строки из файла и парсим их
+	messages := []*canparser.CANMessage{}
+	for _, line := range lines {
+		message, err := parser.ParseLine(line)
+		if err != nil {
+			fmt.Printf("Failed to parse line: %s\n", err)
+			continue
+		}
+		messages = append(messages, message)
+	}
+
+	// Вывод результата в JSON
+	jsonOutput, _ := json.MarshalIndent(messages, "", "  ")
+	fmt.Println(string(jsonOutput))
+
+	// TODO: вывести в файл parsedFilename
+}
+
 func main() {
 	var m Main
 
@@ -93,7 +132,22 @@ func main() {
 	}
 
 	// Создаем менеджер модулей
-	moduleMgr := NewModuleManager(cfg)
+	moduleMgr, err := NewModuleManager(cfg)
+	if err != nil {
+		fmt.Printf("Failed to create module manager: %v\n", err)
+		return
+	}
+
+	if m.canDumpParsingMode {
+		moduleMgr.DisableAllModules()
+
+		err = moduleMgr.EnableModule("canparser")
+		if err != nil {
+			log.Fatalf("Ошибка включения модуля CAN-парсера: %v", err)
+		}
+	}
+
+	fmt.Println("Состояние модулей:", moduleMgr.GetModules())
 
 	client, err := mqttclient.NewClient(m.mqttConfig.Host, m.mqttConfig.Port)
 	if err != nil {
