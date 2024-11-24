@@ -1,0 +1,21 @@
+section1:
+  key1: value1
+  key2: 42
+
+section2:
+  nestedKey:
+    subKey1: 3.14
+    subKey2:
+      - item1
+      - item2
+      - item3
+      - item4
+      - item5
+
+section3:
+  deepNested:
+    level1:
+      level2:
+        level3:
+          level4:
+            key: "deep value"

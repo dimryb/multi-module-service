@@ -1,0 +1,12 @@
+section1:
+  key1: value1
+  key2: 42
+  key3: true
+
+section2:
+  nestedKey:
+    subKey1: 3.14
+    subKey2: [item1, item2, item3]
+
+section3:
+  keyWithSpecialChars: "value with spaces & symbols!"

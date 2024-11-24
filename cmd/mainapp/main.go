@@ -6,12 +6,9 @@ package main
 // добавить модуль конфигурации, выбрать формат конфигурационного файла
 // конфигурация модулей фитча-тоглы
 // конфигурация в yaml файле
-// документация на каждый модуль
-// документация на кросплатформенную сборку
 // файлы сервиса, запуск и проверка на винде в его линукс окружении
 // настройка пайпа гитлаб, прохождение тестов через пайп
 // юнит тесты
-// поддержке двух копий репозитория
 // место хранения базовых констант проекта: версия, имя сервиса
 // модуль контроля и коррекции топиков в MQTT
 
@@ -22,11 +19,26 @@ import (
 	"os"
 	"time"
 
+	"multi-module-service/modules/config"
 	"multi-module-service/modules/mqttclient"
 	"multi-module-service/modules/weather"
 )
 
-func checkFlags() {
+type Main struct {
+	appConfig  AppConfig
+	mqttConfig MqttConfig
+}
+
+type AppConfig struct {
+	Weather bool `json:"weather"`
+}
+
+type MqttConfig struct {
+	Host string `json:"host"`
+	Port int    `json:"port"`
+}
+
+func (*Main) checkFlags() {
 	versionFlag := flag.Bool("version", false, "Показать версию программы")
 	debugFlag := flag.Bool("debug", false, "Включить дебаг-режим")
 	configFileFlag := flag.String("config", "", "Путь к файлу конфигурации")
@@ -48,17 +60,58 @@ func checkFlags() {
 	}
 }
 
-func main() {
-	checkFlags()
+func (m *Main) loadAppConfig() (*config.Config, error) {
+	cfg, err := config.NewConfig("config.yml", &config.DefaultReader{})
+	if err != nil {
+		return nil, fmt.Errorf("loading config: %w", err)
+	}
 
-	client, err := mqttclient.NewClient("192.168.0.6", 1884)
+	// Загружаем данные из конфигурации в структуру
+	if err := cfg.LoadInto("modules", &m.appConfig); err != nil {
+		return nil, fmt.Errorf("loading config into structure: %w", err)
+	}
+
+	// Загружаем конфигурацию MQTT
+	if err := cfg.LoadInto("mqtt", &m.mqttConfig); err != nil {
+		return nil, fmt.Errorf("loading config into structure: %w", err)
+	}
+
+	// Выводим данные из конфигурации
+	fmt.Println("App config:", m)
+
+	return cfg, nil
+}
+
+func main() {
+	var m Main
+
+	m.checkFlags()
+
+	cfg, err := m.loadAppConfig()
+	if err != nil {
+		log.Fatalf("Error loading application config: %v", err)
+	}
+
+	// Создаем менеджер модулей
+	moduleMgr := NewModuleManager(cfg)
+
+	client, err := mqttclient.NewClient(m.mqttConfig.Host, m.mqttConfig.Port)
 	if err != nil {
 		log.Fatalf("Ошибка подключения к MQTT: %v", err)
 	}
 	defer client.Disconnect(250)
 
-	weatherService := weather.NewWeatherService(client, "56.4977", "84.9744", 5*time.Second)
-	go weatherService.Run()
+	weatherModuleName := "weather"
+	enabledWeather, err := moduleMgr.IsModuleEnabled(weatherModuleName)
+	if err != nil {
+		log.Fatalf("Failed to check module state: %v", err)
+	}
+
+	fmt.Printf("Is module '%s' enabled: %v\n", weatherModuleName, enabledWeather)
+	if enabledWeather {
+		weatherService := weather.NewWeatherService(client, "56.4977", "84.9744", 5*time.Second)
+		go weatherService.Run()
+	}
 
 	select {}
 }
